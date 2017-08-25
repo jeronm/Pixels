@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Pixels</string>
+    <string name="edit_message">Enter a message</string>
+    <string name="button_send">Send</string>
+    <string name="title_activity_open_image">OpenImageActivity</string>
+    <string name="button_openImage">Open Image</string>
+</resources>
