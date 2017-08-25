@@ -3,10 +3,12 @@ package com.coolapps.jeron.pixels;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.Image;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.ColorInt;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -14,7 +16,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageView;
 
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OpenImageActivity extends AppCompatActivity {
 
@@ -105,6 +110,72 @@ public class OpenImageActivity extends AppCompatActivity {
      */
     public void abstractImage (View view) {
         Bitmap abstractBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+
+        class Node {
+            int pixel;
+            int x;
+            int y;
+
+            public Node(int pixel, int x, int y) {
+                this.pixel = pixel;
+                this.x = x;
+                this.y = y;
+            }
+        }
+
+        for (int x = 0; x < bitmap.getWidth(); x++) {
+            for (int y = 0; y < bitmap.getHeight(); y++) {
+                int curPixel = abstractBitmap.getPixel(x, y);
+                if (curPixel == 0) {
+                    ArrayList<int[]> pixels = new ArrayList<int[]>();
+                    int totalColor = 0;
+                    findPixels(pixels, bitmap, abstractBitmap, bitmap.getPixel(x,y), x, y, totalColor);
+                    int averageColor = totalColor / pixels.size();
+                    paintBitmap(pixels, abstractBitmap, averageColor);
+                }
+            }
+        }
+
+        ImageView imageView = (ImageView) findViewById(R.id.imageViewPostEdit);
+        imageView.setImageBitmap(abstractBitmap);
+
+
+    }
+
+    public void findPixels (ArrayList<int[]> pixels, Bitmap iBitmap, Bitmap oBitmap,
+                            int seedPixel, int x, int y, int totalColor) {
+        if (x < 0 || x >= iBitmap.getWidth() || y < 0 || y >= iBitmap.getHeight()) return;
+
+        int test = iBitmap.getPixel(500, 350);
+
+        int curIPixel = iBitmap.getPixel(x, y);
+        int curOPixel = oBitmap.getPixel(x, y);
+
+        if (curOPixel != 0) return;
+        double percentDiff = (double)(Math.abs(curIPixel) - Math.abs(seedPixel)) / Math.abs(seedPixel) * 100;
+        if (percentDiff >= 5) return;
+
+        oBitmap.setPixel(x, y, Color.rgb(255, 0, 0));
+
+        int[] pixel = new int[3];
+        pixel[0] = curIPixel;
+        pixel[1] = x;
+        pixel[2] = y;
+
+        pixels.add(pixel);
+        totalColor += curIPixel;
+
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x + 1, y, totalColor);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x - 1, y, totalColor);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x, y + 1, totalColor);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x, y - 1, totalColor);
+    }
+
+    public void paintBitmap (ArrayList<int[]> pixels, Bitmap oBitmap, int averageColor) {
+        while(pixels.size() > 0) {
+            int[] tempPixel = pixels.remove(0);
+            oBitmap.setPixel(tempPixel[1], tempPixel[2], averageColor);
+        }
 
     }
 
