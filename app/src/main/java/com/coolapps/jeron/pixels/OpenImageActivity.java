@@ -128,9 +128,10 @@ public class OpenImageActivity extends AppCompatActivity {
                 int curPixel = abstractBitmap.getPixel(x, y);
                 if (curPixel == 0) {
                     ArrayList<int[]> pixels = new ArrayList<int[]>();
-                    int totalColor = 0;
+                    int[] totalColor = new int[1];
+                    totalColor[0] = 0;
                     findPixels(pixels, bitmap, abstractBitmap, bitmap.getPixel(x,y), x, y, totalColor);
-                    int averageColor = totalColor / pixels.size();
+                    int averageColor = totalColor[0] / pixels.size();
                     paintBitmap(pixels, abstractBitmap, averageColor);
                 }
             }
@@ -143,10 +144,8 @@ public class OpenImageActivity extends AppCompatActivity {
     }
 
     public void findPixels (ArrayList<int[]> pixels, Bitmap iBitmap, Bitmap oBitmap,
-                            int seedPixel, int x, int y, int totalColor) {
+                            int seedPixel, int x, int y, int[] totalColor) {
         if (x < 0 || x >= iBitmap.getWidth() || y < 0 || y >= iBitmap.getHeight()) return;
-
-        int test = iBitmap.getPixel(500, 350);
 
         int curIPixel = iBitmap.getPixel(x, y);
         int curOPixel = oBitmap.getPixel(x, y);
@@ -163,7 +162,7 @@ public class OpenImageActivity extends AppCompatActivity {
         pixel[2] = y;
 
         pixels.add(pixel);
-        totalColor += curIPixel;
+        totalColor[0] += curIPixel;
 
         findPixels(pixels, iBitmap, oBitmap, seedPixel, x + 1, y, totalColor);
         findPixels(pixels, iBitmap, oBitmap, seedPixel, x - 1, y, totalColor);
