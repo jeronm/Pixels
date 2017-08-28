@@ -18,6 +18,7 @@ import android.widget.ImageView;
 
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -128,11 +129,11 @@ public class OpenImageActivity extends AppCompatActivity {
                 int curPixel = abstractBitmap.getPixel(x, y);
                 if (curPixel == 0) {
                     ArrayList<int[]> pixels = new ArrayList<int[]>();
-                    int[] totalColor = new int[1];
-                    totalColor[0] = 0;
-                    findPixels(pixels, bitmap, abstractBitmap, bitmap.getPixel(x,y), x, y, totalColor);
-                    int averageColor = totalColor[0] / pixels.size();
-                    paintBitmap(pixels, abstractBitmap, averageColor);
+                    findPixels(pixels, bitmap, abstractBitmap, bitmap.getPixel(x,y), x, y);
+                    if (pixels.size() > 0) {
+                        int averageColor = averageColor(pixels);
+                        paintBitmap(pixels, abstractBitmap, averageColor);
+                    }
                 }
             }
         }
@@ -144,15 +145,27 @@ public class OpenImageActivity extends AppCompatActivity {
     }
 
     public void findPixels (ArrayList<int[]> pixels, Bitmap iBitmap, Bitmap oBitmap,
-                            int seedPixel, int x, int y, int[] totalColor) {
+                            int seedPixel, int x, int y) {
         if (x < 0 || x >= iBitmap.getWidth() || y < 0 || y >= iBitmap.getHeight()) return;
 
         int curIPixel = iBitmap.getPixel(x, y);
         int curOPixel = oBitmap.getPixel(x, y);
 
         if (curOPixel != 0) return;
-        double percentDiff = (double)(Math.abs(curIPixel) - Math.abs(seedPixel)) / Math.abs(seedPixel) * 100;
-        if (percentDiff >= 5) return;
+        //double percentDiff = (double)(Math.abs(curIPixel) - Math.abs(seedPixel)) / Math.abs(seedPixel) * 100;
+        //if (percentDiff >= 5) return;
+
+        // seed pixel components
+        int sRed = Color.red(seedPixel);
+        int sBlue = Color.blue(seedPixel);
+        int sGreen = Color.green(seedPixel);
+
+        // current input pixel components
+        int red = Color.red(curIPixel);
+        int blue = Color.blue(curIPixel);
+        int green = Color.green(curIPixel);
+
+        if ((Math.abs(sRed - red) + Math.abs(sBlue - blue) + Math.abs(sGreen - green)) >= 100) return;
 
         oBitmap.setPixel(x, y, Color.rgb(255, 0, 0));
 
@@ -162,12 +175,11 @@ public class OpenImageActivity extends AppCompatActivity {
         pixel[2] = y;
 
         pixels.add(pixel);
-        totalColor[0] += curIPixel;
 
-        findPixels(pixels, iBitmap, oBitmap, seedPixel, x + 1, y, totalColor);
-        findPixels(pixels, iBitmap, oBitmap, seedPixel, x - 1, y, totalColor);
-        findPixels(pixels, iBitmap, oBitmap, seedPixel, x, y + 1, totalColor);
-        findPixels(pixels, iBitmap, oBitmap, seedPixel, x, y - 1, totalColor);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x + 1, y);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x - 1, y);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x, y + 1);
+        findPixels(pixels, iBitmap, oBitmap, seedPixel, x, y - 1);
     }
 
     public void paintBitmap (ArrayList<int[]> pixels, Bitmap oBitmap, int averageColor) {
@@ -176,6 +188,19 @@ public class OpenImageActivity extends AppCompatActivity {
             oBitmap.setPixel(tempPixel[1], tempPixel[2], averageColor);
         }
 
+    }
+
+    public int averageColor (ArrayList<int[]> pixels) {
+        int totalRed = 0;
+        int totalBlue = 0;
+        int totalGreen = 0;
+        for (int i = 0; i < pixels.size(); i++) {
+            totalRed += Color.red(pixels.get(i)[0]);
+            totalBlue += Color.blue(pixels.get(i)[0]);
+            totalGreen += Color.green(pixels.get(i)[0]);
+        }
+        return Color.rgb(totalRed / pixels.size(), totalGreen / pixels.size(),
+                totalBlue / pixels.size());
     }
 
 }
